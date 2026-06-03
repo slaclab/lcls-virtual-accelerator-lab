@@ -3,11 +3,9 @@ import os
 os.environ.setdefault("OMP_NUM_THREADS", "2")
 os.environ.setdefault("MKL_NUM_THREADS", "2")
 os.environ.setdefault("OPENBLAS_NUM_THREADS", "2")
+os.environ.setdefault("TORCH_NUM_THREADS", "2")
 
-import torch  # noqa: E402
-torch.set_num_threads(int(os.environ.get("TORCH_NUM_THREADS", "2")))
-
-import logging  # noqa: E402
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -140,6 +138,9 @@ async def reset_models(req: EvaluateRequest):
 
 
 # Serve frontend static files in production
-static_dir = Path(__file__).parent.parent / "frontend" / "dist"
+# Check both Docker path (./static/) and local dev path (../frontend/dist)
+static_dir = Path(__file__).parent / "static"
+if not static_dir.exists():
+    static_dir = Path(__file__).parent.parent / "frontend" / "dist"
 if static_dir.exists():
     app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")

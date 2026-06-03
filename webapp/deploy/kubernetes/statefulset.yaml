@@ -69,14 +69,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: lcls-surrogate-lab-config
-          args:
-            - /bin/sh
-            - -c
-            - |
-              ORDINAL=$(hostname | rev | cut -d- -f1 | rev)
-              exec uvicorn main:app \
-                --host 0.0.0.0 --port 8000 \
-                --root-path "/ai-lab/g$((ORDINAL + 1))"
+          command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
           startupProbe:
             httpGet:
               path: /api/config
@@ -102,16 +95,10 @@ spec:
             - containerPort: 8000
               name: http
           volumeMounts:
-            - name: lattice
-              mountPath: /lattice
-              readOnly: true
             - name: sensitivity-cache
               mountPath: /app/.cache
               readOnly: true
       volumes:
-        - name: lattice
-          persistentVolumeClaim:
-            claimName: lcls-lattice-pvc
         - name: sensitivity-cache
           configMap:
             name: lcls-surrogate-lab-sensitivity-cache
