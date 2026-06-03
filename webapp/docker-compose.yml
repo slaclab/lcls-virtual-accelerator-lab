@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - LCLS_LATTICE=/lattice
+      - NUM_GROUPS=${NUM_GROUPS:-6}
+    volumes:
+      - ${LCLS_LATTICE_PATH:-./lattice}:/lattice:ro

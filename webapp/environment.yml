@@ -1,0 +1,18 @@
+name: lcls-surrogate-lab
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pytao
+  - numpy
+  - scipy
+  - pandas
+  - pip
+  - pip:
+    - torch
+    - fastapi
+    - uvicorn[standard]
+    - pydantic
+    - git+https://github.com/slaclab/virtual-accelerator.git
+    - git+https://github.com/slaclab/LCLS_FEL_Surrogate.git
