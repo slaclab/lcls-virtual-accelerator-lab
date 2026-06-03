@@ -3,7 +3,6 @@
 ## Project Structure
 
 ```
-webapp/
 ├── backend/
 │   ├── main.py              # FastAPI app, lifespan (pool init), all endpoints
 │   ├── session_pool.py      # SessionPool class: manages per-group model instances
