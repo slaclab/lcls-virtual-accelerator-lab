@@ -1,0 +1,81 @@
+# ---------------------------------------------------------------------------
+# Per-pod Services — one for each StatefulSet ordinal.
+# Used by Ingress to route /ai-lab/gN directly to the corresponding worker.
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: lcls-lab-g1
+  namespace: lcls-surrogate-lab
+spec:
+  selector:
+    statefulset.kubernetes.io/pod-name: lcls-lab-worker-0
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lcls-lab-g2
+  namespace: lcls-surrogate-lab
+spec:
+  selector:
+    statefulset.kubernetes.io/pod-name: lcls-lab-worker-1
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lcls-lab-g3
+  namespace: lcls-surrogate-lab
+spec:
+  selector:
+    statefulset.kubernetes.io/pod-name: lcls-lab-worker-2
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lcls-lab-g4
+  namespace: lcls-surrogate-lab
+spec:
+  selector:
+    statefulset.kubernetes.io/pod-name: lcls-lab-worker-3
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lcls-lab-g5
+  namespace: lcls-surrogate-lab
+spec:
+  selector:
+    statefulset.kubernetes.io/pod-name: lcls-lab-worker-4
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lcls-lab-g6
+  namespace: lcls-surrogate-lab
+spec:
+  selector:
+    statefulset.kubernetes.io/pod-name: lcls-lab-worker-5
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

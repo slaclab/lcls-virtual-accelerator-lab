@@ -1,0 +1,62 @@
+# ---------------------------------------------------------------------------
+# Ingress — adds /ai-lab/ paths to the existing ard-modeling-service host.
+# Same annotations as lume-visualizations ingress.
+# ---------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lcls-surrogate-lab
+  namespace: lcls-surrogate-lab
+  annotations:
+    nginx.ingress.kubernetes.io/whitelist-source-range: "71.198.255.25,134.79.0.0/16,172.16.0.0/12,208.45.173.162,216.46.165.69,172.27.8.0/24"
+    nginx.ingress.kubernetes.io/proxy-body-size: 2g
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "ard-modeling-service.slac.stanford.edu"
+    http:
+      paths:
+        - path: /ai-lab/g1
+          pathType: Prefix
+          backend:
+            service:
+              name: lcls-lab-g1
+              port:
+                number: 80
+        - path: /ai-lab/g2
+          pathType: Prefix
+          backend:
+            service:
+              name: lcls-lab-g2
+              port:
+                number: 80
+        - path: /ai-lab/g3
+          pathType: Prefix
+          backend:
+            service:
+              name: lcls-lab-g3
+              port:
+                number: 80
+        - path: /ai-lab/g4
+          pathType: Prefix
+          backend:
+            service:
+              name: lcls-lab-g4
+              port:
+                number: 80
+        - path: /ai-lab/g5
+          pathType: Prefix
+          backend:
+            service:
+              name: lcls-lab-g5
+              port:
+                number: 80
+        - path: /ai-lab/g6
+          pathType: Prefix
+          backend:
+            service:
+              name: lcls-lab-g6
+              port:
+                number: 80

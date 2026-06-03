@@ -31,6 +31,8 @@ export NUM_GROUPS=1  # Use 1 for development (each instance takes ~5s to create)
 
 ### 3. Pre-compute sensitivity cache (first time only)
 
+The FEL tab exposes the 5 most impactful model inputs as sliders. These are determined by a sensitivity analysis that sweeps all inputs and ranks them by output impact. Results are cached so they only need to be computed once — but if the FEL model is updated (retrained on new data), delete the cache file and regenerate to pick up any shift in the most impactful parameters.
+
 If `backend/.cache/fel_sensitivity.json` does not exist, the server will compute it on first startup (~60 seconds). To avoid timeouts, generate it manually:
 
 ```bash

@@ -1,0 +1,117 @@
+# ---------------------------------------------------------------------------
+# AI Lab Workers — 6-replica StatefulSet
+# Each pod runs one FastAPI instance with one injector + one FEL model.
+# Pods are isolated: one group per pod, no shared torch state.
+#
+# CHANGING THE NUMBER OF WORKERS
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#   1. Change `replicas:` below
+#   2. Add/remove per-pod Service blocks in services.yaml
+#   3. Add/remove Ingress paths in ingress.yaml
+#   4. Apply: cd deploy/kubernetes && kubectl apply -k .
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: lcls-lab-worker
+  namespace: lcls-surrogate-lab
+spec:
+  clusterIP: None
+  selector:
+    app: lcls-lab-worker
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: lcls-lab-worker
+  namespace: lcls-surrogate-lab
+spec:
+  serviceName: lcls-lab-worker
+  podManagementPolicy: Parallel
+  replicas: 6
+  selector:
+    matchLabels:
+      app: lcls-lab-worker
+  template:
+    metadata:
+      labels:
+        app: lcls-lab-worker
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: app
+          image: ghcr.io/slaclab/lcls-surrogate-lab:latest
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+            limits:
+              memory: "3Gi"
+              cpu: "2000m"
+          env:
+            # Thread pinning — critical for performance in cgroup-limited pods.
+            # Without this, torch/OpenMP spawn 64 threads on 2 cores → 30-50x slowdown.
+            - name: OMP_NUM_THREADS
+              value: "2"
+            - name: MKL_NUM_THREADS
+              value: "2"
+            - name: OPENBLAS_NUM_THREADS
+              value: "2"
+            - name: TORCH_NUM_THREADS
+              value: "2"
+            - name: TZ
+              value: "US/Pacific"
+          envFrom:
+            - configMapRef:
+                name: lcls-surrogate-lab-config
+          args:
+            - /bin/sh
+            - -c
+            - |
+              ORDINAL=$(hostname | rev | cut -d- -f1 | rev)
+              exec uvicorn main:app \
+                --host 0.0.0.0 --port 8000 \
+                --root-path "/ai-lab/g$((ORDINAL + 1))"
+          startupProbe:
+            httpGet:
+              path: /api/config
+              port: 8000
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: /api/config
+              port: 8000
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/config
+              port: 8000
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          ports:
+            - containerPort: 8000
+              name: http
+          volumeMounts:
+            - name: lattice
+              mountPath: /lattice
+              readOnly: true
+            - name: sensitivity-cache
+              mountPath: /app/.cache
+              readOnly: true
+      volumes:
+        - name: lattice
+          persistentVolumeClaim:
+            claimName: lcls-lattice-pvc
+        - name: sensitivity-cache
+          configMap:
+            name: lcls-surrogate-lab-sensitivity-cache

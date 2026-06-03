@@ -68,7 +68,11 @@ The physical maximum for LCLS HXR is approximately 4 mJ. The neural network can 
 
 **Problem**: The FEL model has many input parameters, but students should only see the 5 most impactful ones as interactive sliders.
 
-**Solution**: At startup, the backend performs a sensitivity analysis — sweeping each FEL input across its full range while holding others at defaults, and measuring the output variance. The top 5 most sensitive non-overlapping inputs become the FEL-only sliders. Results are cached to avoid repeating the ~60-second analysis.
+**Solution**: A sensitivity analysis sweeps each FEL input across its full range while holding others at defaults, measuring the output variance. The top 5 most sensitive non-overlapping inputs become the FEL-only sliders.
+
+**Why dynamic (not hardcoded)**: The FEL model weights are fixed for this lab, so the top-5 results won't change between runs. However, if the model is retrained on new data (which happens periodically as LCLS operating conditions evolve), the most impactful inputs may shift. Keeping the analysis as a cached computation means updating the model only requires deleting `.cache/fel_sensitivity.json` and restarting — no code changes needed.
+
+**Cache behavior**: Results are stored in `backend/.cache/fel_sensitivity.json`. If the file exists, it's loaded instantly at startup. If missing, the analysis runs (~60s) and caches the results. For K8s deployment, the cache is mounted as a ConfigMap to avoid recomputation on pod restarts.
 
 ### 7. Image Processing Pipeline
 
@@ -112,27 +116,90 @@ This reduces transfer size from ~5.5MB to ~120KB per evaluation while retaining 
 
 6. **No persistence**: Student slider states are not saved. Refreshing the page resets to defaults.
 
-## Deployment: SLAC Kubernetes (Next Steps)
+## Deployment: SLAC Kubernetes
+
+### Architecture: One Pod Per Group
+
+Each student group gets its own pod with exactly one model instance. This avoids:
+- **Torch double-load segfaults** (multiple torch contexts in one process)
+- **Cascading failures** (one group's crash doesn't affect others)
+- **Thread contention** (each pod's resource limit matches its thread count)
+
+This follows the same pattern as `lume-visualizations` (StatefulSet + per-pod Services + Ingress routing) but is simpler: no allocator needed since groups are pre-assigned.
 
 ### Target Environment
-SLAC's S3DF (SLAC Shared Scientific Data Facility) runs Kubernetes. The app will be deployed as a pod with:
 
-### Requirements
-- **Base image**: Miniconda with conda-forge channel (for pytao/Bmad)
-- **Volume mount**: `lcls-lattice` directory (~500MB of lattice definition files)
-- **Memory request**: At least 16GB for 6 concurrent model instances
-- **CPU**: Multi-core helps with concurrent group evaluations (Python GIL limits this for CPU-bound Bmad work)
-- **Environment variables**: `LCLS_LATTICE`, `NUM_GROUPS`, `KMP_DUPLICATE_LIB_OK=TRUE`
+SLAC's S3DF runs Kubernetes. Deployed to the same cluster and host as lume-visualizations (`ard-modeling-service.slac.stanford.edu`), under the path `/ai-lab/`.
 
-### Deployment Checklist
-1. Build Docker image with conda environment including pytao
-2. Pre-compute and include `fel_sensitivity.json` in the image (avoids 60s startup delay)
-3. Configure `lcls-lattice` volume mount
-4. Set `NUM_GROUPS` to match expected simultaneous groups
-5. Expose port 8000 via Kubernetes Service/Ingress
-6. Configure health check endpoint (the `/api/config` endpoint works)
-7. Set memory limits appropriately — OOMKill is likely if too low
-8. Consider a readiness probe that waits for model pool initialization
+### Infrastructure
+
+| Component | Purpose |
+|-----------|---------|
+| StatefulSet (6 replicas) | One pod per group, predictable names (`lcls-lab-worker-0` through `-5`) |
+| Per-pod Services (`lcls-lab-g1` through `g6`) | Route ingress paths to specific pods |
+| Headless Service | Required by StatefulSet for pod DNS |
+| Ingress | Path-based routing: `/ai-lab/g1` → worker-0, etc. |
+| ConfigMap | Env vars + pre-computed sensitivity cache |
+| PVC | lcls-lattice volume (shared read-only across all pods) |
+
+### Thread Pinning (Critical)
+
+In K8s, `os.cpu_count()` returns the host CPU count (e.g., 64) but pods are cgroup-limited to 2 cores. Without thread pinning, PyTorch and OpenMP spawn 64 threads on 2 cores → **30-50x slowdown** (5-10s per eval instead of 180ms).
+
+Env vars set in StatefulSet:
+```
+OMP_NUM_THREADS=2
+MKL_NUM_THREADS=2
+OPENBLAS_NUM_THREADS=2
+TORCH_NUM_THREADS=2
+```
+
+The backend also calls `torch.set_num_threads(2)` at import time.
+
+### Resources Per Pod
+
+- **Memory**: request 2Gi, limit 3Gi
+- **CPU**: request 1000m, limit 2000m
+- **Startup time**: ~30s (model loading + sensitivity cache read)
 
 ### Network Topology
-Students will access the app via a lab-specific URL. The Kubernetes ingress routes to the single pod. No horizontal scaling is needed (or feasible — each pod manages its own stateful model pool).
+
+```
+Students → https://ard-modeling-service.slac.stanford.edu/ai-lab/g1/
+                                                            /ai-lab/g2/
+                                                            ...
+                                                            /ai-lab/g6/
+         → nginx Ingress (same as lume-visualizations)
+         → per-pod Service → StatefulSet pod (FastAPI + models)
+```
+
+### Deployment Commands
+
+```bash
+# Build and push image
+docker build -t ghcr.io/slaclab/lcls-surrogate-lab:latest .
+docker push ghcr.io/slaclab/lcls-surrogate-lab:latest
+
+# Deploy
+cd deploy/kubernetes
+kubectl apply -k .
+
+# Verify
+kubectl get pods -n lcls-surrogate-lab
+kubectl logs -n lcls-surrogate-lab lcls-lab-worker-0
+```
+
+### Health Checks
+
+- **Startup probe**: GET `/api/config`, allows up to 3 min for model loading
+- **Readiness probe**: GET `/api/config`, marks pod ready for traffic
+- **Liveness probe**: GET `/api/config`, restarts pod if unresponsive
+
+### Failure Modes
+
+| Scenario | Behavior |
+|----------|----------|
+| One pod OOM/segfault | Only that group loses state. Pod auto-restarts in ~30s. Others unaffected. |
+| All pods restart | All groups see "Waiting for data..." for ~30s, then resume. |
+| Slider causes model error | Backend returns 500, frontend shows error message. Other groups unaffected. |
+| Pod exceeds CPU | Evaluation slows but doesn't crash (thread pinning prevents worst case). |

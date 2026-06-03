@@ -1,4 +1,13 @@
-import logging
+import os
+
+os.environ.setdefault("OMP_NUM_THREADS", "2")
+os.environ.setdefault("MKL_NUM_THREADS", "2")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "2")
+
+import torch  # noqa: E402
+torch.set_num_threads(int(os.environ.get("TORCH_NUM_THREADS", "2")))
+
+import logging  # noqa: E402
 from contextlib import asynccontextmanager
 from pathlib import Path
 
