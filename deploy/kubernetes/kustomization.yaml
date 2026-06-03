@@ -11,8 +11,3 @@ resources:
 images:
   - name: ghcr.io/slaclab/lcls-surrogate-lab
     newTag: latest
-
-configMapGenerator:
-  - name: lcls-surrogate-lab-sensitivity-cache
-    files:
-      - sensitivity-cache/fel_sensitivity.json

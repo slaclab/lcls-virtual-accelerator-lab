@@ -4,8 +4,7 @@ __pycache__/
 *.egg-info/
 .venv/
 
-# Backend cache
-backend/.cache/
+# Backend cache (fel_sensitivity.json is committed — only regenerate when FEL model changes)
 
 # Node
 frontend/node_modules/

@@ -91,7 +91,7 @@ export NUM_GROUPS=1  # For development
 | `libtao not found` | Wrong conda env or missing conda package | `conda env create -f environment.yml` then activate |
 | `OMP: Error #15` | torch and bmad both ship libomp | `export KMP_DUPLICATE_LIB_OK=TRUE` |
 | `LCLS_LATTICE not set` | Missing env var | Export the path to lcls-lattice repo |
-| Server startup timeout | Sensitivity analysis running | Pre-compute: check `backend/.cache/fel_sensitivity.json` exists |
+| Server startup timeout | Sensitivity cache missing, recomputing (~60s) | File should be committed in repo at `backend/.cache/fel_sensitivity.json` — regenerate only when FEL model changes |
 | `KeyError: 'hxr_pulse_intensity'` | Wrong output key | Use `GDET:FEE1:241:ENRC` |
 | `TypeError: 'list' object has no attribute 'keys'` | Treating `input_variables` as dict | It is a list of objects, iterate with `.name` attribute |
 | Blank beam image in UI | Beam lost (zeros array) | Expected — handle gracefully in frontend |
@@ -111,7 +111,7 @@ export NUM_GROUPS=1  # For development
 
 6. **Do NOT install pytao via pip.** It requires the libtao shared library which is only available from conda-forge.
 
-7. **Do NOT skip the sensitivity cache.** Computing sensitivity takes ~60 seconds and will cause startup timeouts in production. Always ensure `.cache/fel_sensitivity.json` exists.
+7. **Do NOT delete the sensitivity cache without regenerating.** The file `backend/.cache/fel_sensitivity.json` is committed to the repo and baked into the Docker image. If missing, startup takes ~60s extra. Only delete+regenerate when the FEL model is updated.
 
 8. **Do NOT send the full 1392x1040 image to the frontend.** It is ~5.5MB per frame. Crop and downsample to ~150-200px in the backend.
 

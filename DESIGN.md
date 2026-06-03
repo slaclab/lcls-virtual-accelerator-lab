@@ -72,7 +72,7 @@ The physical maximum for LCLS HXR is approximately 4 mJ. The neural network can 
 
 **Why dynamic (not hardcoded)**: The FEL model weights are fixed for this lab, so the top-5 results won't change between runs. However, if the model is retrained on new data (which happens periodically as LCLS operating conditions evolve), the most impactful inputs may shift. Keeping the analysis as a cached computation means updating the model only requires deleting `.cache/fel_sensitivity.json` and restarting — no code changes needed.
 
-**Cache behavior**: Results are stored in `backend/.cache/fel_sensitivity.json`. If the file exists, it's loaded instantly at startup. If missing, the analysis runs (~60s) and caches the results. For K8s deployment, the cache is mounted as a ConfigMap to avoid recomputation on pod restarts.
+**Cache behavior**: Results are committed to the repo at `backend/.cache/fel_sensitivity.json` and included in the Docker image. Loaded instantly at startup. If missing, the analysis runs (~60s) and regenerates it. To update after a model change: delete the file, run the compute script, and commit the new version.
 
 ### 7. Image Processing Pipeline
 

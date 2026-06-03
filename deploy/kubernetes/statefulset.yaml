@@ -94,11 +94,3 @@ spec:
           ports:
             - containerPort: 8000
               name: http
-          volumeMounts:
-            - name: sensitivity-cache
-              mountPath: /app/.cache
-              readOnly: true
-      volumes:
-        - name: sensitivity-cache
-          configMap:
-            name: lcls-surrogate-lab-sensitivity-cache

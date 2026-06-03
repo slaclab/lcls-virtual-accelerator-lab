@@ -29,16 +29,19 @@ export KMP_DUPLICATE_LIB_OK=TRUE
 export NUM_GROUPS=1  # Use 1 for development (each instance takes ~5s to create)
 ```
 
-### 3. Pre-compute sensitivity cache (first time only)
+### 3. Sensitivity cache (usually no action needed)
 
-The FEL tab exposes the 5 most impactful model inputs as sliders. These are determined by a sensitivity analysis that sweeps all inputs and ranks them by output impact. Results are cached so they only need to be computed once — but if the FEL model is updated (retrained on new data), delete the cache file and regenerate to pick up any shift in the most impactful parameters.
+The FEL tab exposes the 5 most impactful model inputs as sliders, determined by a sensitivity analysis. The results are committed to the repo at `backend/.cache/fel_sensitivity.json` and loaded instantly at startup.
 
-If `backend/.cache/fel_sensitivity.json` does not exist, the server will compute it on first startup (~60 seconds). To avoid timeouts, generate it manually:
+**Regenerate only if the FEL model is updated** (retrained on new data):
 
 ```bash
 cd backend
+rm .cache/fel_sensitivity.json
 python -c "from sensitivity import compute_sensitivity; compute_sensitivity()"
 ```
+
+Then commit the updated file. If the cache file is missing at startup, the server will recompute it (~60 seconds).
 
 ### 4. Start the backend
 

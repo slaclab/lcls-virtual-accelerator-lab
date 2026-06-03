@@ -68,11 +68,8 @@ RUN python -m pip install --upgrade setuptools wheel \
     && python -m pip install git+https://github.com/slaclab/LCLS_FEL_Surrogate.git \
     && python -m pip install fastapi uvicorn[standard] numpy scipy pydantic
 
-# Copy backend code
+# Copy backend code (includes .cache/fel_sensitivity.json)
 COPY backend/ ./
-
-# Copy pre-computed sensitivity cache
-COPY backend/.cache/ ./.cache/
 
 # Copy built frontend
 COPY --from=frontend-build /app/frontend/dist ./static/
