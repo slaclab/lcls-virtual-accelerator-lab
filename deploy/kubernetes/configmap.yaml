@@ -4,6 +4,6 @@ metadata:
   name: lcls-surrogate-lab-config
   namespace: lcls-surrogate-lab
 data:
-  LCLS_LATTICE: /lattice
+  LCLS_LATTICE: /opt/lcls-lattice
   KMP_DUPLICATE_LIB_OK: "TRUE"
   NUM_GROUPS: "1"
