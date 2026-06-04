@@ -143,4 +143,17 @@ static_dir = Path(__file__).parent / "static"
 if not static_dir.exists():
     static_dir = Path(__file__).parent.parent / "frontend" / "dist"
 if static_dir.exists():
-    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+    from starlette.responses import Response
+
+    _static_app = StaticFiles(directory=str(static_dir), html=True)
+
+    @app.middleware("http")
+    async def cache_control(request, call_next):
+        response: Response = await call_next(request)
+        if request.url.path.startswith("/assets/"):
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        elif request.url.path == "/" or request.url.path.endswith(".html"):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
+    app.mount("/", _static_app, name="static")

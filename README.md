@@ -5,8 +5,18 @@ Interactive web application for high school students to explore neural network s
 ## Prerequisites
 
 - **Conda** (miniconda or mambaforge)
-- **Node.js** 18+ and npm
-- **lcls-lattice** repository cloned locally (`git clone https://github.com/slaclab/lcls-lattice`)
+- **Node.js** 18+ and npm (for frontend development only; not needed for Docker deployment)
+
+## Key Packages (installed via `environment.yml`)
+
+| Package | Source | Purpose |
+|---------|--------|---------|
+| `pytao` | conda-forge | Python interface to Bmad/Tao accelerator simulation (includes `libtao` shared library) |
+| `bmad` | conda-forge | Accelerator lattice simulation engine |
+| `torch` | pip (CPU) | Neural network inference |
+| `virtual-accelerator[surrogate,bmad]` | [GitHub](https://github.com/slaclab/virtual-accelerator) | Staged model: injector NN + Bmad beam tracking |
+| `lcls-fel-model` | [GitHub](https://github.com/slaclab/LCLS_FEL_Surrogate) | FEL pulse intensity surrogate model |
+| `fastapi` / `uvicorn` | pip | Backend web server |
 
 ## Local Development Setup
 
@@ -17,8 +27,6 @@ conda env create -f environment.yml
 conda activate lcls-surrogate-lab
 ```
 
-This installs Python 3.12, `pytao` (with the Bmad shared library `libtao` from conda-forge), PyTorch, FastAPI, and both model packages (`virtual-accelerator`, `lcls-fel-model`).
-
 **Why conda?** The `pytao` package wraps the Bmad accelerator simulation library, which ships a compiled Fortran shared library (`libtao`). This is only distributed via conda-forge — it cannot be installed with pip alone.
 
 ### 2. Set environment variables
@@ -28,6 +36,8 @@ export LCLS_LATTICE=/path/to/lcls-lattice
 export KMP_DUPLICATE_LIB_OK=TRUE
 export NUM_GROUPS=1  # Use 1 for development (each instance takes ~5s to create)
 ```
+
+The `lcls-lattice` repo contains Bmad lattice definition files. Clone it from https://github.com/slaclab/lcls-lattice if you don't have it.
 
 ### 3. Sensitivity cache (usually no action needed)
 
@@ -50,9 +60,9 @@ cd backend
 uvicorn main:app --reload --port 8000
 ```
 
-Wait for "Application startup complete" — model pool initialization takes a few seconds.
+Wait for "Application startup complete" — model pool initialization takes ~25 seconds.
 
-### 5. Start the frontend
+### 5. Start the frontend (development)
 
 ```bash
 cd frontend
@@ -66,35 +76,66 @@ npm run dev
 http://localhost:5173/?group=1
 ```
 
-The `?group=N` parameter routes to a specific model instance. Use `group=1` for development.
+The Vite dev server proxies `/api` requests to the backend at `localhost:8000`.
 
-## Production Deployment
-
-### Docker Compose
+### Production mode (no separate frontend server)
 
 ```bash
-export LCLS_LATTICE_PATH=/path/to/lcls-lattice
-export NUM_GROUPS=6  # One per student group
-docker compose up --build
+cd frontend && npm run build && cd ..
+cd backend
+uvicorn main:app --port 8000
 ```
 
-Students access: `http://<server-ip>:8000/?group=N` (N = 1 through NUM_GROUPS)
+Open `http://localhost:8000/` — FastAPI serves the built frontend directly.
 
-The Docker image uses conda-forge for pytao and bundles the frontend as static files served by FastAPI.
+## Kubernetes Deployment
+
+The app deploys on SLAC's S3DF Kubernetes cluster as a StatefulSet with one pod per student group.
+
+### Architecture
+
+- 6-replica StatefulSet (one pod per group, each with one model instance)
+- Per-pod Services with path-based Ingress routing
+- Served at `https://ard-modeling-service.slac.stanford.edu/ai-lab/g1/` through `/ai-lab/g6/`
+- Docker image bakes in `lcls-lattice` and the sensitivity cache — no volumes needed
+
+### Deploy
+
+```bash
+# Build and push (or let CI handle this via .github/workflows/build-container.yml)
+docker build -t ghcr.io/slaclab/lcls-surrogate-lab:latest .
+docker push ghcr.io/slaclab/lcls-surrogate-lab:latest
+
+# Apply manifests
+cd deploy/kubernetes
+kubectl apply -k .
+
+# Verify
+kubectl get pods -n lcls-surrogate-lab -w
+```
 
 ### Docker Build Notes
 
-- The image is large (~4GB) due to conda + Bmad + PyTorch
-- The `lcls-lattice` directory is mounted as a volume, not baked into the image
-- Pre-computed `fel_sensitivity.json` should be included in `backend/.cache/` before building
+- Image is ~5.6GB (conda + Bmad + PyTorch)
+- Forced `linux/amd64` platform (Bmad not available for arm64)
+- `lcls-lattice` is cloned into the image at `/opt/lcls-lattice`
+- `virtual-accelerator` is cloned at `/opt/virtual-accelerator` (subtree directory needed at runtime)
+- `lume-bmad` and `lume-torch` are pinned to specific commits for compatibility
+
+### CI
+
+Pushing to `main` or creating a version tag triggers `.github/workflows/build-container.yml`, which builds and pushes to `ghcr.io/slaclab/lcls-surrogate-lab`.
 
 ## Configuration
 
 | Environment Variable | Required | Default | Description |
 |---------------------|----------|---------|-------------|
-| `LCLS_LATTICE` | Yes | — | Path to lcls-lattice directory |
-| `KMP_DUPLICATE_LIB_OK` | Yes | — | Set to `TRUE` to suppress OpenMP duplicate library error |
-| `NUM_GROUPS` | No | 6 | Number of model instances to pre-create |
+| `LCLS_LATTICE` | Yes | `/opt/lcls-lattice` (in Docker) | Path to lcls-lattice directory |
+| `KMP_DUPLICATE_LIB_OK` | Yes | `TRUE` (in Docker) | Suppress OpenMP duplicate library error |
+| `NUM_GROUPS` | No | `1` | Number of model instances to pre-create per pod |
+| `OMP_NUM_THREADS` | No | `2` | Thread pinning for OpenMP (critical in K8s) |
+| `MKL_NUM_THREADS` | No | `2` | Thread pinning for MKL |
+| `TORCH_NUM_THREADS` | No | `2` | Thread pinning for PyTorch |
 
 ## API Endpoints
 
@@ -111,44 +152,55 @@ Request body for evaluate endpoints: `{"group": 1, "inputs": {"param_name": valu
 ## Tabs
 
 1. **Injector**: Adjust solenoid and quadrupole settings, observe beam cross-section changes in real time
-2. **FEL**: Adjust accelerator parameters, maximize X-ray pulse energy (0-4 mJ)
-3. **Combined**: Shared sliders show how upstream changes affect both beam shape and FEL output simultaneously
+2. **FEL**: Adjust accelerator parameters, maximize X-ray pulse energy (0–4 mJ)
+3. **Combined**: Shared sliders (restricted to FEL training range) show how upstream changes affect both beam shape and FEL output simultaneously
 
 ## Architecture
 
-- **Backend**: FastAPI (Python) with session-pooled model instances (one per student group)
+- **Backend**: FastAPI (Python) with one model instance per pod
 - **Frontend**: React + Vite + TypeScript with canvas-based beam image rendering
 - **Models**:
-  - Injector + Bmad staged model from `virtual-accelerator` (beam image at OTR4)
+  - Injector + Bmad staged model from `virtual-accelerator` (beam image at OTR4 screen)
   - FEL surrogate model from `lcls-fel-model` (pulse intensity in mJ)
-- **Session management**: One model instance pair per student group, routed via `?group=N` URL parameter
+- **K8s deployment**: StatefulSet with per-pod Services, path-based Ingress routing (`/ai-lab/gN/`)
+- **Thread pinning**: Critical in K8s — without it, PyTorch/OpenMP spawn 64 threads on 2 cores causing 30–50x slowdown
 
 ## Troubleshooting
 
 ### "No module named 'pytao'" or "libtao not found"
 
-You are not in the correct conda environment. Run `conda activate va-dev-2`.
+You are not in the correct conda environment. Run `conda activate lcls-surrogate-lab` (or recreate with `conda env create -f environment.yml`).
 
-### "LCLS_LATTICE environment variable not set"
+### "TAO INITIALIZATION FILE NOT FOUND"
 
-Export the path: `export LCLS_LATTICE=/path/to/lcls-lattice`
+`LCLS_LATTICE` is pointing to the wrong path. Verify the directory exists and contains `bmad/models/cu_hxr/tao.init`.
 
 ### "OMP: Error #15: Initializing libomp, but found libiomp5 already initialized"
 
 Set `export KMP_DUPLICATE_LIB_OK=TRUE`. This happens because both PyTorch and Bmad link their own copy of OpenMP.
 
-### Server hangs on startup
+### Server takes ~25s to start
 
-The sensitivity analysis is computing (~60 seconds). Either wait, or pre-compute it (see setup step 3).
+Normal — Bmad lattice initialization takes time. The K8s startup probe allows up to 180 seconds.
 
 ### Blank beam image
 
 The beam is "lost" — extreme slider values steered particles off the OTR4 screen. This is expected behavior. Reset sliders or move them to less extreme values.
 
-### Frontend shows connection errors
+### Blank page in K8s deployment
+
+Check that `base: './'` is set in `frontend/vite.config.ts`. Without it, asset paths are absolute (`/assets/...`) which don't work behind path-based ingress rewriting.
+
+### Frontend shows connection errors (local dev)
 
 Ensure the backend is running on port 8000. The Vite dev server proxies `/api` requests to `localhost:8000`.
 
 ### Docker: "Killed" during startup
 
-The container ran out of memory. Each model instance needs ~2GB. For 6 groups, allocate at least 16GB to the container.
+The container ran out of memory. Each model instance needs ~2GB. Ensure the pod has at least 2Gi memory limit.
+
+### K8s: CrashLoopBackOff
+
+Check logs with `kubectl logs <pod> -n lcls-surrogate-lab`. Common causes:
+- Wrong `LCLS_LATTICE` path (should be `/opt/lcls-lattice` in the Docker image)
+- Package version mismatch (check pinned commits in Dockerfile)
