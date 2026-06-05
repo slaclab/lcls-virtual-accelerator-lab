@@ -204,3 +204,31 @@ The container ran out of memory. Each model instance needs ~2GB. Ensure the pod 
 Check logs with `kubectl logs <pod> -n lcls-surrogate-lab`. Common causes:
 - Wrong `LCLS_LATTICE` path (should be `/opt/lcls-lattice` in the Docker image)
 - Package version mismatch (check pinned commits in Dockerfile)
+
+
+## If deploying on fly.io
+Run from the root of the repo:
+
+```bash
+# Deploy 6 groups (default)
+./deploy/fly_deploy.sh
+
+# Deploy 4 groups
+./deploy/fly_deploy.sh 4
+
+# Scale all apps to 0 machines (stops billing, keeps apps configured)
+for i in 1 2 3 4 5 6; do
+  fly scale count 0 --app lcls-lab-g${i} --yes
+done
+
+# To bring them back up before the lab:
+
+for i in 1 2 3 4 5 6; do
+  fly scale count 1 --app lcls-lab-g${i} --yes
+done
+
+# Machines take ~30-60s to start (model loading). Scale up 5 minutes before the lab starts.
+
+# Tear down completely
+for i in 1 2 3 4 5 6; do fly apps destroy lcls-lab-g${i} --yes; done
+```

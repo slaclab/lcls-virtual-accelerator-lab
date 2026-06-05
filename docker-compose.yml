@@ -1,10 +1,48 @@
+# VM deployment: 6 isolated containers (one per group) + nginx router.
+# Usage: docker compose up -d
+# Students access: http://<server-ip>/g1/ through /g6/
 services:
-  app:
-    build: .
+  g1:
+    image: ghcr.io/slaclab/lcls-surrogate-lab:latest
+    restart: unless-stopped
+    mem_limit: 3g
+
+  g2:
+    image: ghcr.io/slaclab/lcls-surrogate-lab:latest
+    restart: unless-stopped
+    mem_limit: 3g
+
+  g3:
+    image: ghcr.io/slaclab/lcls-surrogate-lab:latest
+    restart: unless-stopped
+    mem_limit: 3g
+
+  g4:
+    image: ghcr.io/slaclab/lcls-surrogate-lab:latest
+    restart: unless-stopped
+    mem_limit: 3g
+
+  g5:
+    image: ghcr.io/slaclab/lcls-surrogate-lab:latest
+    restart: unless-stopped
+    mem_limit: 3g
+
+  g6:
+    image: ghcr.io/slaclab/lcls-surrogate-lab:latest
+    restart: unless-stopped
+    mem_limit: 3g
+
+  nginx:
+    image: nginx:alpine
     ports:
-      - "${PORT:-8000}:8000"
-    environment:
-      - LCLS_LATTICE=/lattice
-      - NUM_GROUPS=${NUM_GROUPS:-6}
+      - "80:80"
     volumes:
-      - ${LCLS_LATTICE_PATH:-./lattice}:/lattice:ro
+      - ./deploy/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - g1
+      - g2
+      - g3
+      - g4
+      - g5
+      - g6
+    restart: unless-stopped
