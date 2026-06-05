@@ -88,16 +88,16 @@ uvicorn main:app --port 8000
 
 Open `http://localhost:8000/` — FastAPI serves the built frontend directly.
 
-## Kubernetes Deployment
+## Deployment
 
-The app deploys on SLAC's S3DF Kubernetes cluster as a StatefulSet with one pod per student group.
+The app deploys on SLAC's S3DF Kubernetes cluster as a StatefulSet with one pod per student group (one model instance per container for fault isolation).
 
 ### Architecture
 
-- 6-replica StatefulSet (one pod per group, each with one model instance)
+- 6-replica StatefulSet (one pod per group)
 - Per-pod Services with path-based Ingress routing
 - Served at `https://ard-modeling-service.slac.stanford.edu/ai-lab/g1/` through `/ai-lab/g6/`
-- Docker image bakes in `lcls-lattice` and the sensitivity cache — no volumes needed
+- Docker image bakes in `lcls-lattice` and the sensitivity cache
 
 ### Deploy
 
@@ -118,9 +118,9 @@ kubectl get pods -n lcls-surrogate-lab -w
 
 - Image is ~5.6GB (conda + Bmad + PyTorch)
 - Forced `linux/amd64` platform (Bmad not available for arm64)
-- `lcls-lattice` is cloned into the image at `/opt/lcls-lattice`
-- `virtual-accelerator` is cloned at `/opt/virtual-accelerator` (subtree directory needed at runtime)
-- `lume-bmad` and `lume-torch` are pinned to specific commits for compatibility
+- `lcls-lattice` cloned into image at `/opt/lcls-lattice`
+- `virtual-accelerator` cloned at `/opt/virtual-accelerator` (subtree directory needed at runtime)
+- `lume-bmad` and `lume-torch` pinned to specific commits for compatibility (see Dockerfile)
 
 ### CI
 
@@ -157,13 +157,13 @@ Request body for evaluate endpoints: `{"group": 1, "inputs": {"param_name": valu
 
 ## Architecture
 
-- **Backend**: FastAPI (Python) with one model instance per pod
+- **Backend**: FastAPI (Python), one model instance per container
 - **Frontend**: React + Vite + TypeScript with canvas-based beam image rendering
 - **Models**:
   - Injector + Bmad staged model from `virtual-accelerator` (beam image at OTR4 screen)
   - FEL surrogate model from `lcls-fel-model` (pulse intensity in mJ)
-- **K8s deployment**: StatefulSet with per-pod Services, path-based Ingress routing (`/ai-lab/gN/`)
-- **Thread pinning**: Critical in K8s — without it, PyTorch/OpenMP spawn 64 threads on 2 cores causing 30–50x slowdown
+- **Isolation**: One container per group (avoids torch segfaults and cascading failures)
+- **Thread pinning**: Critical in containers. Without it, PyTorch/OpenMP spawn 64 threads on 2 cores causing 30-50x slowdown
 
 ## Troubleshooting
 
@@ -204,31 +204,3 @@ The container ran out of memory. Each model instance needs ~2GB. Ensure the pod 
 Check logs with `kubectl logs <pod> -n lcls-surrogate-lab`. Common causes:
 - Wrong `LCLS_LATTICE` path (should be `/opt/lcls-lattice` in the Docker image)
 - Package version mismatch (check pinned commits in Dockerfile)
-
-
-## If deploying on fly.io
-Run from the root of the repo:
-
-```bash
-# Deploy 6 groups (default)
-./deploy/fly_deploy.sh
-
-# Deploy 4 groups
-./deploy/fly_deploy.sh 4
-
-# Scale all apps to 0 machines (stops billing, keeps apps configured)
-for i in 1 2 3 4 5 6; do
-  fly scale count 0 --app lcls-lab-g${i} --yes
-done
-
-# To bring them back up before the lab:
-
-for i in 1 2 3 4 5 6; do
-  fly scale count 1 --app lcls-lab-g${i} --yes
-done
-
-# Machines take ~30-60s to start (model loading). Scale up 5 minutes before the lab starts.
-
-# Tear down completely
-for i in 1 2 3 4 5 6; do fly apps destroy lcls-lab-g${i} --yes; done
-```
