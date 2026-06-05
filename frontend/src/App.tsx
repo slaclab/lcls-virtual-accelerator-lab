@@ -10,8 +10,16 @@ import "./App.css";
 type Tab = "injector" | "fel" | "combined";
 
 function getGroupFromURL(): number {
+  // Try ?group=N query param first (local dev)
   const params = new URLSearchParams(window.location.search);
-  return parseInt(params.get("group") ?? "1", 10);
+  const fromParam = params.get("group");
+  if (fromParam) return parseInt(fromParam, 10);
+
+  // Try path-based: /gN/ or /ai-lab/gN/ (production deployments)
+  const match = window.location.pathname.match(/\/g(\d+)/);
+  if (match) return parseInt(match[1], 10);
+
+  return 1;
 }
 
 function App() {
