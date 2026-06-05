@@ -152,7 +152,7 @@ The same Docker image is used for all deployment methods. The only difference is
 - Need to remove whitelist from ingress to make it public + run by IT
 - Manifests: `deploy/kubernetes/`
 
-### Option A: Fly.io (public, per-group apps)
+### Option B: Fly.io (public, per-group apps)
 
 Best for the student lab (public access, no SLAC login required).
 
@@ -163,7 +163,7 @@ Best for the student lab (public access, no SLAC login required).
 - Cost: under $1 for a 4-hour lab
 - Scale to 0 between labs (no billing)
 
-### Option B: AWS EC2 + Docker Compose (public, single VM)
+### Option C: AWS EC2 + Docker Compose (public, single VM)
 
 Alternative for public access via SLAC AWS.
 
