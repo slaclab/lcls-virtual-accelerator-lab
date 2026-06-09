@@ -59,6 +59,19 @@ def compute_sensitivity(n_points: int = 20) -> list[dict]:
     return results
 
 
+def _beamline_sort_key(item: dict) -> tuple:
+    """Sort PVs by beamline location: linac sections first, then undulator."""
+    parts = item["id"].split(":")
+    if parts[1].startswith("LI"):
+        section = int(parts[1][2:])
+        element = int(parts[2])
+        return (0, section, element)
+    elif parts[1] == "UNDH":
+        segment = int(parts[2])
+        return (1, segment, 0)
+    return (2, 0, 0)
+
+
 def get_top_fel_sliders(n: int = 5) -> list[dict]:
     """Get the top N most sensitive FEL-only sliders, using cache if available."""
     if CACHE_PATH.exists():
@@ -74,6 +87,7 @@ def get_top_fel_sliders(n: int = 5) -> list[dict]:
         logger.info(f"Cached sensitivity results to {CACHE_PATH}")
 
     top = results[:n]
+    top.sort(key=_beamline_sort_key)
 
     FEL_LABELS = {
         "ACCL:LI25:1:ADES": ("Linac Energy", "Main accelerator energy setting", "MeV"),
@@ -82,6 +96,11 @@ def get_top_fel_sliders(n: int = 5) -> list[dict]:
         "ACCL:LI21:1:L1S_S_PV": ("L1 Phase", "First linac section phase", "deg"),
         "ACCL:LI22:1:PDES": ("L2 Phase", "Linac 2 RF phase for compression", "deg"),
         "ACCL:LI25:1:PDES": ("L3 Phase", "Linac 3 RF phase", "deg"),
+        "QUAD:LI25:901:BCTRL": ("Mid-Linac Quad", "Focuses the beam in the middle of the linear accelerator", "kG"),
+        "QUAD:LI29:401:BCTRL": ("Pre-Undulator Quad", "Final focusing before the beam enters the undulator", "kG"),
+        "USEG:UNDH:4150:GapAct": ("Undulator Gap 1", "Magnetic gap of upstream undulator segment; narrower gap = stronger field", "mm"),
+        "USEG:UNDH:4250:GapAct": ("Undulator Gap 2", "Magnetic gap of middle undulator segment", "mm"),
+        "USEG:UNDH:4650:GapAct": ("Undulator Gap 3", "Magnetic gap of downstream undulator segment", "mm"),
     }
 
     sliders = []
@@ -94,7 +113,7 @@ def get_top_fel_sliders(n: int = 5) -> list[dict]:
             parts = pv.split(":")
             label = f"{parts[0]} {parts[2]}"
             desc = f"Accelerator component {parts[1]}:{parts[2]}"
-            unit = "kG" if "QUAD" in pv else ""
+            unit = "kG" if "QUAD" in pv else ("mm" if "USEG" in pv else "")
 
         sliders.append({
             "id": pv,

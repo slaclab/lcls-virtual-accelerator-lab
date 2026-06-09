@@ -11,6 +11,17 @@ os.environ["LCLS_LATTICE"] = LCLS_LATTICE
 logger = logging.getLogger(__name__)
 
 
+# Fixed ROI: central crop of the transposed image (shape 1040 x 1392 after .T)
+_ROI_ROWS = 500
+_ROI_COLS = 700
+_IMG_ROWS = 1040
+_IMG_COLS = 1392
+_ROI_R0 = (_IMG_ROWS - _ROI_ROWS) // 2
+_ROI_R1 = _ROI_R0 + _ROI_ROWS
+_ROI_C0 = (_IMG_COLS - _ROI_COLS) // 2
+_ROI_C1 = _ROI_C0 + _ROI_COLS
+
+
 class InjectorSession:
     def __init__(self):
         from virtual_accelerator.models.staged_model import get_cu_hxr_staged_model
@@ -21,6 +32,7 @@ class InjectorSession:
     def evaluate(self, inputs: dict[str, float]) -> dict:
         self.model.set(inputs)
         image = self.model.get("OTRS:IN20:711:Image:ArrayData")
+        image = image.T  # transpose so rows=y (vertical), cols=x (horizontal)
         beam = self.model.get("OTR4_beam")
 
         beam_x = np.asarray(beam.x) * 1e6  # convert m → µm
@@ -55,36 +67,11 @@ class InjectorSession:
 
     @staticmethod
     def _process_image(image: np.ndarray) -> np.ndarray:
-        """Normalize image and crop to region with signal."""
-        if image.max() == 0:
-            return np.zeros((100, 100))
-
-        # Normalize to 0-1
-        img = image / image.max()
-
-        # Find bounding box of signal with padding
-        nonzero = np.argwhere(img > 0)
-        if len(nonzero) == 0:
-            return np.zeros((100, 100))
-
-        y_min, x_min = nonzero.min(axis=0)
-        y_max, x_max = nonzero.max(axis=0)
-
-        # Add 10% padding
-        pad_y = max(10, int((y_max - y_min) * 0.1))
-        pad_x = max(10, int((x_max - x_min) * 0.1))
-        y_min = max(0, y_min - pad_y)
-        y_max = min(image.shape[0], y_max + pad_y)
-        x_min = max(0, x_min - pad_x)
-        x_max = min(image.shape[1], x_max + pad_x)
-
-        cropped = img[y_min:y_max, x_min:x_max]
-
-        # Downsample to ~150x200 for transfer
-        h, w = cropped.shape
-        step_h = max(1, h // 150)
-        step_w = max(1, w // 200)
-        return cropped[::step_h, ::step_w]
+        """Normalize image and crop to fixed central ROI."""
+        max_val = image.max()
+        img = image / max_val if max_val > 0 else image.astype(float)
+        cropped = img[_ROI_R0:_ROI_R1, _ROI_C0:_ROI_C1]
+        return cropped[::4, ::4]
 
     def reset(self):
         self.model.reset()
