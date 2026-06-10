@@ -4,8 +4,6 @@ interface Props {
   image: Float32Array;
   imageRows: number;
   imageCols: number;
-  beamX: number[];
-  beamY: number[];
 }
 
 const CANVAS_WIDTH = 400;

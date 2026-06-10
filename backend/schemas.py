@@ -9,8 +9,6 @@ class EvaluateRequest(BaseModel):
 class InjectorResponse(BaseModel):
     image_b64: str
     image_shape: list[int]
-    beam_x: list[float]
-    beam_y: list[float]
     beam_size_x: float
     beam_size_y: float
 
@@ -22,8 +20,6 @@ class FELResponse(BaseModel):
 class CombinedResponse(BaseModel):
     image_b64: str
     image_shape: list[int]
-    beam_x: list[float]
-    beam_y: list[float]
     beam_size_x: float
     beam_size_y: float
     pulse_intensity: float

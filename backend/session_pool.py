@@ -39,6 +39,10 @@ class InjectorSession:
         beam_x = np.asarray(beam.x) * 1e6  # convert m → µm
         beam_y = np.asarray(beam.y) * 1e6
 
+        # NOTE: per-particle arrays (beam_x/beam_y) are computed but NOT shipped
+        # to the frontend right now — Pydantic strips extras at the response layer.
+        # Kept here so a future scatter overlay can reuse this path without rewiring.
+
         if len(beam_x) == 0:
             empty = np.zeros((_ROI_ROWS, _ROI_COLS), dtype=np.float32)
             return {
@@ -56,7 +60,7 @@ class InjectorSession:
         # Normalize image for display and crop to beam region
         image_norm = self._process_image(image)
 
-        # Subsample particles for scatter plot
+        # Subsample particles for scatter plot (currently unused on the wire — see note above)
         n_particles = len(beam_x)
         idx = np.random.choice(n_particles, min(500, n_particles), replace=False)
 

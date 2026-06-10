@@ -29,8 +29,6 @@ function decodeFloat32Image(b64: string): Float32Array {
 interface InjectorWirePayload {
   image_b64: string;
   image_shape: [number, number];
-  beam_x: number[];
-  beam_y: number[];
   beam_size_x: number;
   beam_size_y: number;
 }
@@ -44,8 +42,6 @@ function unpackInjector(p: InjectorWirePayload): InjectorResponse {
     image: decodeFloat32Image(p.image_b64),
     imageRows: p.image_shape[0],
     imageCols: p.image_shape[1],
-    beam_x: p.beam_x,
-    beam_y: p.beam_y,
     beam_size_x: p.beam_size_x,
     beam_size_y: p.beam_size_y,
   };

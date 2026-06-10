@@ -133,8 +133,6 @@ export function CombinedPanel({ sharedSliders, felOnlySliders, group }: Props) {
           image={result?.image ?? new Float32Array(0)}
           imageRows={result?.imageRows ?? 0}
           imageCols={result?.imageCols ?? 0}
-          beamX={result?.beam_x ?? []}
-          beamY={result?.beam_y ?? []}
         />
         <div className="scalar-row">
           <ScalarDisplay

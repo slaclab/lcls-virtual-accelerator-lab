@@ -13,8 +13,6 @@ export interface InjectorResponse {
   image: Float32Array;
   imageRows: number;
   imageCols: number;
-  beam_x: number[];
-  beam_y: number[];
   beam_size_x: number;
   beam_size_y: number;
 }
