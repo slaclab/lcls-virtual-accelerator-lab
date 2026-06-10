@@ -10,7 +10,9 @@ export interface SliderConfig {
 }
 
 export interface InjectorResponse {
-  image: number[][];
+  image: Float32Array;
+  imageRows: number;
+  imageCols: number;
   beam_x: number[];
   beam_y: number[];
   beam_size_x: number;

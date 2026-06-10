@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import logging
 import os
 
@@ -39,8 +40,10 @@ class InjectorSession:
         beam_y = np.asarray(beam.y) * 1e6
 
         if len(beam_x) == 0:
+            empty = np.zeros((_ROI_ROWS, _ROI_COLS), dtype=np.float32)
             return {
-                "image": np.zeros((50, 50)).tolist(),
+                "image_b64": base64.b64encode(empty.tobytes()).decode("ascii"),
+                "image_shape": list(empty.shape),
                 "beam_x": [],
                 "beam_y": [],
                 "beam_size_x": 0.0,
@@ -58,7 +61,8 @@ class InjectorSession:
         idx = np.random.choice(n_particles, min(500, n_particles), replace=False)
 
         return {
-            "image": image_norm.tolist(),
+            "image_b64": base64.b64encode(image_norm.tobytes()).decode("ascii"),
+            "image_shape": list(image_norm.shape),
             "beam_x": beam_x[idx].tolist(),
             "beam_y": beam_y[idx].tolist(),
             "beam_size_x": beam_size_x,
@@ -67,11 +71,14 @@ class InjectorSession:
 
     @staticmethod
     def _process_image(image: np.ndarray) -> np.ndarray:
-        """Normalize image and crop to fixed central ROI."""
+        """Normalize image and crop to fixed central ROI.
+
+        Returns float32 (so .tobytes() yields a compact binary payload).
+        """
         max_val = image.max()
         img = image / max_val if max_val > 0 else image.astype(float)
         cropped = img[_ROI_R0:_ROI_R1, _ROI_C0:_ROI_C1]
-        return cropped[::4, ::4]
+        return cropped.astype(np.float32, copy=False)
 
     def reset(self):
         self.model.reset()

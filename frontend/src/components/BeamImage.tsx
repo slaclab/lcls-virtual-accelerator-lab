@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
 
 interface Props {
-  image: number[][];
+  image: Float32Array;
+  imageRows: number;
+  imageCols: number;
   beamX: number[];
   beamY: number[];
 }
@@ -9,22 +11,7 @@ interface Props {
 const CANVAS_WIDTH = 400;
 const CANVAS_HEIGHT = 300;
 
-function valueToColor(v: number): [number, number, number] {
-  // "Hot" colormap: black → red → yellow → white
-  if (v <= 0) return [0, 0, 0];
-  if (v <= 0.33) {
-    const t = v / 0.33;
-    return [Math.round(t * 255), 0, 0];
-  }
-  if (v <= 0.66) {
-    const t = (v - 0.33) / 0.33;
-    return [255, Math.round(t * 255), 0];
-  }
-  const t = (v - 0.66) / 0.34;
-  return [255, 255, Math.round(t * 255)];
-}
-
-export function BeamImage({ image }: Props) {
+export function BeamImage({ image, imageRows, imageCols }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -33,7 +20,7 @@ export function BeamImage({ image }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    if (!image || image.length === 0 || !image[0] || image[0].length === 0) {
+    if (!image || image.length === 0 || imageRows === 0 || imageCols === 0) {
       ctx.fillStyle = "#f3f4f6";
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       ctx.fillStyle = "#9ca3af";
@@ -43,29 +30,42 @@ export function BeamImage({ image }: Props) {
       return;
     }
 
-    const rows = image.length;
-    const cols = image[0].length;
+    const rows = imageRows;
+    const cols = imageCols;
     const imgData = ctx.createImageData(cols, rows);
+    const data = imgData.data;
 
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        const idx = (y * cols + x) * 4;
-        const [r, g, b] = valueToColor(image[y][x]);
-        imgData.data[idx] = r;
-        imgData.data[idx + 1] = g;
-        imgData.data[idx + 2] = b;
-        imgData.data[idx + 3] = 255;
+    // Inlined "Hot" colormap (black → red → yellow → white) for tight pixel loop.
+    const N = rows * cols;
+    for (let i = 0; i < N; i++) {
+      const v = image[i];
+      let r: number, g: number, b: number;
+      if (v <= 0) {
+        r = 0; g = 0; b = 0;
+      } else if (v <= 0.33) {
+        r = (v / 0.33) * 255 | 0; g = 0; b = 0;
+      } else if (v <= 0.66) {
+        r = 255; g = ((v - 0.33) / 0.33) * 255 | 0; b = 0;
+      } else {
+        r = 255; g = 255; b = ((v - 0.66) / 0.34) * 255 | 0;
       }
+      const o = i * 4;
+      data[o] = r;
+      data[o + 1] = g;
+      data[o + 2] = b;
+      data[o + 3] = 255;
     }
 
-    // Draw at native resolution then scale to canvas
+    // Draw at native resolution then scale (down) to canvas.
+    // Smoothing on since we are now downsampling 500×700 → 400×300.
     const offscreen = new OffscreenCanvas(cols, rows);
     const offCtx = offscreen.getContext("2d")!;
     offCtx.putImageData(imgData, 0, 0);
 
-    ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.drawImage(offscreen, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-  }, [image]);
+  }, [image, imageRows, imageCols]);
 
   return (
     <div className="beam-image">

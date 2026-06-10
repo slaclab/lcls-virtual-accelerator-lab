@@ -19,6 +19,38 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return res.json();
 }
 
+// Decode a base64 string into a Float32Array (image is shipped as float32 LE bytes).
+function decodeFloat32Image(b64: string): Float32Array {
+  const bin = atob(b64);
+  const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  return new Float32Array(bytes.buffer);
+}
+
+interface InjectorWirePayload {
+  image_b64: string;
+  image_shape: [number, number];
+  beam_x: number[];
+  beam_y: number[];
+  beam_size_x: number;
+  beam_size_y: number;
+}
+
+interface CombinedWirePayload extends InjectorWirePayload {
+  pulse_intensity: number;
+}
+
+function unpackInjector(p: InjectorWirePayload): InjectorResponse {
+  return {
+    image: decodeFloat32Image(p.image_b64),
+    imageRows: p.image_shape[0],
+    imageCols: p.image_shape[1],
+    beam_x: p.beam_x,
+    beam_y: p.beam_y,
+    beam_size_x: p.beam_size_x,
+    beam_size_y: p.beam_size_y,
+  };
+}
+
 export async function fetchConfig(): Promise<ConfigResponse> {
   const res = await fetch(`${API_BASE}/api/config`);
   if (!res.ok) throw new Error("Failed to fetch config");
@@ -29,7 +61,8 @@ export async function evaluateInjector(
   group: number,
   inputs: Record<string, number>
 ): Promise<InjectorResponse> {
-  return post("/api/injector/evaluate", { group, inputs });
+  const wire = await post<InjectorWirePayload>("/api/injector/evaluate", { group, inputs });
+  return unpackInjector(wire);
 }
 
 export async function evaluateFEL(
@@ -43,7 +76,8 @@ export async function evaluateCombined(
   group: number,
   inputs: Record<string, number>
 ): Promise<CombinedResponse> {
-  return post("/api/combined/evaluate", { group, inputs });
+  const wire = await post<CombinedWirePayload>("/api/combined/evaluate", { group, inputs });
+  return { ...unpackInjector(wire), pulse_intensity: wire.pulse_intensity };
 }
 
 export async function resetModels(group: number): Promise<void> {
