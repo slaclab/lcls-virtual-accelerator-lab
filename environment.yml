@@ -14,5 +14,5 @@ dependencies:
     - fastapi
     - uvicorn[standard]
     - pydantic
-    - virtual-accelerator[surrogate,bmad] @ git+https://github.com/slaclab/virtual-accelerator.git
+    - virtual-accelerator[surrogate,bmad] @ git+https://github.com/slaclab/virtual-accelerator.git@77bbda8
     - git+https://github.com/slaclab/LCLS_FEL_Surrogate.git

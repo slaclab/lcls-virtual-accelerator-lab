@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import injectorDiagram from "../assets/injector_diagram.png";
 import { evaluateInjector } from "../api/client";
 import type { InjectorResponse, SliderConfig } from "../types";
 import { BeamImage } from "./BeamImage";
+import { BeamlineDiagram } from "./BeamlineDiagram";
 import { ScalarDisplay } from "./ScalarDisplay";
 import { SliderControl } from "./SliderControl";
 
@@ -81,6 +83,11 @@ export function InjectorPanel({ sliders, group }: Props) {
       </div>
       <div className="panel-output">
         {error && <div className="error-message">{error}</div>}
+        <BeamlineDiagram
+          src={injectorDiagram}
+          alt="Injector beamline schematic"
+          caption="The injector beamline — 5 magnets you control"
+        />
         <BeamImage
           image={result?.image ?? []}
           beamX={result?.beam_x ?? []}

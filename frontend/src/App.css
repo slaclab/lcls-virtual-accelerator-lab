@@ -91,8 +91,33 @@
 .panel-output {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.25rem;
   align-items: center;
+}
+
+.beamline-diagram {
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.4rem 0.5rem 0.45rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.beamline-diagram-caption {
+  display: block;
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+}
+
+.beamline-diagram img {
+  display: block;
+  height: 170px;
+  width: auto;
+  max-width: 100%;
 }
 
 .slider-control {

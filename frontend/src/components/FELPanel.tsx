@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import beamlineDiagram from "../assets/beamline_endtoend.png";
 import { evaluateFEL } from "../api/client";
 import type { FELResponse, SliderConfig } from "../types";
+import { BeamlineDiagram } from "./BeamlineDiagram";
 import { IntensityGauge } from "./IntensityGauge";
 import { SliderControl } from "./SliderControl";
 
@@ -78,6 +80,11 @@ export function FELPanel({ sliders, group }: Props) {
       </div>
       <div className="panel-output">
         {error && <div className="error-message">{error}</div>}
+        <BeamlineDiagram
+          src={beamlineDiagram}
+          alt="End-to-end beamline"
+          caption="Where your sliders live — gauge below shows the gas-detector reading"
+        />
         <IntensityGauge value={result?.pulse_intensity ?? 0} />
       </div>
     </div>

@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>UI mockups — diagram placement options</title>
+  <style>
+    /* ---------- shell (matches App.css) ---------- */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f1f5f9;
+      color: #1f2937;
+      padding: 2rem 1rem 4rem;
+    }
+    h1.page-title {
+      max-width: 1400px;
+      margin: 0 auto 1.5rem;
+      font-size: 1.4rem;
+      color: #1f2937;
+    }
+    h1.page-title small {
+      font-weight: 400;
+      color: #64748b;
+      font-size: 0.85rem;
+      margin-left: 0.5rem;
+    }
+    h2.section-title {
+      max-width: 1400px;
+      margin: 2.5rem auto 0.6rem;
+      font-size: 1.05rem;
+      color: #0f172a;
+      border-top: 2px solid #cbd5e1;
+      padding-top: 1rem;
+    }
+    .option-label {
+      max-width: 1400px;
+      margin: 1.2rem auto 0.4rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #0b1929;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .option-label .pros {
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      color: #475569;
+      font-size: 0.78rem;
+      margin-left: 0.5rem;
+    }
+
+    /* one mocked viewport */
+    .mock {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0.5rem 1rem 1rem;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    .app-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    .group-badge {
+      background: #3b82f6;
+      color: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .tab-nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .tab-nav button {
+      padding: 0.35rem 1.25rem;
+      border: 2px solid #d1d5db;
+      border-radius: 0.5rem;
+      background: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .tab-nav button.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    /* panel grid */
+    .panel {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 1.5rem;
+    }
+
+    /* slider mocks */
+    .panel-controls h4 {
+      margin: 0 0 0.5rem;
+      font-size: 1.1rem;
+    }
+    .panel-controls h5 {
+      margin: 0.75rem 0 0.25rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+    }
+    .slider-mock {
+      margin-bottom: 0.5rem;
+      padding: 0.5rem 0.6rem;
+      background: #f9fafb;
+      border-radius: 0.375rem;
+      border: 1px solid #e5e7eb;
+    }
+    .slider-mock .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.8rem;
+    }
+    .slider-mock .name {
+      font-weight: 600;
+      color: #1f2937;
+    }
+    .slider-mock .val {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #3b82f6;
+    }
+    .slider-mock .desc {
+      font-size: 0.65rem;
+      color: #6b7280;
+      margin: 0.1rem 0 0.3rem;
+    }
+    .slider-mock .track {
+      height: 5px;
+      background: #d1d5db;
+      border-radius: 3px;
+      position: relative;
+    }
+    .slider-mock .track::after {
+      content: "";
+      position: absolute;
+      top: -4px;
+      width: 14px;
+      height: 14px;
+      background: #3b82f6;
+      border-radius: 50%;
+    }
+    .slider-mock .track.t1::after { left: 32%; }
+    .slider-mock .track.t2::after { left: 58%; }
+    .slider-mock .track.t3::after { left: 22%; }
+    .slider-mock .track.t4::after { left: 71%; }
+    .slider-mock .track.t5::after { left: 45%; }
+
+    /* output column placeholders */
+    .panel-output {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .beam-img-ph {
+      width: 400px;
+      height: 300px;
+      border-radius: 0.5rem;
+      background:
+        radial-gradient(circle at 50% 50%,
+          #fef3c7 0%, #f59e0b 16%, #b91c1c 36%, #1e1b4b 65%, #000 100%);
+      box-shadow: 0 0 0 1px #1e293b inset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.55);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .scalar-row {
+      display: flex;
+      gap: 2rem;
+    }
+    .scalar {
+      text-align: center;
+    }
+    .scalar .lab {
+      font-size: 0.7rem;
+      color: #6b7280;
+      display: block;
+      margin-bottom: 0.15rem;
+    }
+    .scalar .v {
+      font-size: 1.25rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: #1f2937;
+    }
+    .gauge-ph {
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+    }
+    .gauge-ph .lab {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 0.15rem;
+    }
+    .gauge-ph .v {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: #10b981;
+    }
+    .gauge-ph .bar {
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 0.4rem;
+      position: relative;
+    }
+    .gauge-ph .bar::after {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 62%;
+      background: linear-gradient(90deg, #10b981, #f59e0b);
+      border-radius: 5px;
+    }
+    .gauge-ph .range {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.6rem;
+      color: #9ca3af;
+      margin-top: 0.15rem;
+    }
+
+    /* diagram styling variants */
+    .diagram-banner {
+      width: 100%;
+      margin: 0 0 0.8rem;
+      padding: 0.4rem 0.6rem 0.5rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      text-align: center;
+    }
+    .diagram-banner .cap {
+      display: block;
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+    .diagram-banner img {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      max-height: 220px;
+      height: auto;
+      width: auto;
+    }
+    .diagram-banner.compact img { max-height: 140px; }
+    .diagram-banner.tight {
+      padding: 0.3rem 0.5rem;
+      margin-bottom: 0.6rem;
+    }
+
+    /* in-output-column variant */
+    .diagram-inline {
+      width: 100%;
+      max-width: 720px;
+      padding: 0.4rem 0.5rem 0.5rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      text-align: center;
+    }
+    .diagram-inline .cap {
+      display: block;
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+    .diagram-inline img {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      max-height: 200px;
+      height: auto;
+      width: auto;
+    }
+
+    /* collapsible accordion variant */
+    details.diagram-accordion {
+      width: 100%;
+      margin: 0 0 0.8rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      background: #f8fafc;
+    }
+    details.diagram-accordion > summary {
+      cursor: pointer;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #1f2937;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    details.diagram-accordion > summary::before {
+      content: "▸";
+      color: #64748b;
+      transition: transform 0.15s;
+      display: inline-block;
+    }
+    details[open].diagram-accordion > summary::before {
+      transform: rotate(90deg);
+    }
+    details.diagram-accordion .body {
+      padding: 0 0.75rem 0.6rem;
+      text-align: center;
+    }
+    details.diagram-accordion img {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      max-height: 240px;
+      height: auto;
+      width: auto;
+    }
+
+    .legend-bar {
+      display: inline-block;
+      margin-left: 0.5rem;
+      padding: 0.05rem 0.5rem;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 1rem;
+      font-size: 0.65rem;
+      color: #065f46;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .legend-bar.amber {
+      background: #fffbeb;
+      border-color: #fcd34d;
+      color: #92400e;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 class="page-title">
+    UI placement mockups for context diagrams
+    <small>3 options each — using real <code>16_injector.png</code> &amp; <code>17_beamline_endtoend.png</code></small>
+  </h1>
+
+  <!-- =============================================================== -->
+  <!-- INJECTOR TAB — uses 16_injector.png                              -->
+  <!-- =============================================================== -->
+  <h2 class="section-title">Injector tab — schematic above the beam image</h2>
+
+  <!-- ------------------- INJECTOR OPTION A ------------------- -->
+  <div class="option-label">
+    Option A · Full-width banner above the panel grid
+    <span class="pros">Always visible · context first · no extra clicks · costs ~220 px of vertical space</span>
+  </div>
+  <div class="mock">
+    <div class="app-header">
+      <h3>LCLS Surrogate Lab — Injector</h3>
+      <span class="group-badge">Group 1</span>
+    </div>
+    <div class="tab-nav">
+      <button class="active">Injector</button>
+      <button>FEL</button>
+      <button>Combined</button>
+    </div>
+
+    <div class="diagram-banner">
+      <span class="cap">The injector beamline · the 5 sliders below control the labeled magnets</span>
+      <img src="../../talk-ai-at-slac/diagrams/16_injector.png" alt="Injector schematic" />
+    </div>
+
+    <div class="panel">
+      <div class="panel-controls">
+        <h4>Injector Controls</h4>
+        <div class="slider-mock"><div class="head"><span class="name">Solenoid Current</span><span class="val">0.478</span></div><div class="desc">Focuses the beam right after the gun.</div><div class="track t1"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Upstream Quad</span><span class="val">−2.10</span></div><div class="desc">Matching quadrupole.</div><div class="track t2"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Upstream Quad 2</span><span class="val">+1.85</span></div><div class="desc">Matching quadrupole.</div><div class="track t3"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Final Focus H</span><span class="val">−3.40</span></div><div class="desc">Squeezes horizontally.</div><div class="track t4"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Final Focus V</span><span class="val">+2.90</span></div><div class="desc">Squeezes vertically.</div><div class="track t5"></div></div>
+      </div>
+      <div class="panel-output">
+        <div class="beam-img-ph">beam image (OTRS:IN20:711)</div>
+        <div class="scalar-row">
+          <div class="scalar"><span class="lab">Beam Size X</span><span class="v">142 µm</span></div>
+          <div class="scalar"><span class="lab">Beam Size Y</span><span class="v">98 µm</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------- INJECTOR OPTION B ------------------- -->
+  <div class="option-label">
+    Option B · Inline above the beam image (right column only)
+    <span class="pros">Aligned with the result · narrower diagram · sliders column unobstructed</span>
+  </div>
+  <div class="mock">
+    <div class="app-header">
+      <h3>LCLS Surrogate Lab — Injector</h3>
+      <span class="group-badge">Group 1</span>
+    </div>
+    <div class="tab-nav">
+      <button class="active">Injector</button>
+      <button>FEL</button>
+      <button>Combined</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-controls">
+        <h4>Injector Controls</h4>
+        <div class="slider-mock"><div class="head"><span class="name">Solenoid Current</span><span class="val">0.478</span></div><div class="desc">Focuses the beam right after the gun.</div><div class="track t1"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Upstream Quad</span><span class="val">−2.10</span></div><div class="desc">Matching quadrupole.</div><div class="track t2"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Upstream Quad 2</span><span class="val">+1.85</span></div><div class="desc">Matching quadrupole.</div><div class="track t3"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Final Focus H</span><span class="val">−3.40</span></div><div class="desc">Squeezes horizontally.</div><div class="track t4"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Final Focus V</span><span class="val">+2.90</span></div><div class="desc">Squeezes vertically.</div><div class="track t5"></div></div>
+      </div>
+      <div class="panel-output">
+        <div class="diagram-inline">
+          <span class="cap">The injector beamline — 5 magnets you control</span>
+          <img src="../../talk-ai-at-slac/diagrams/16_injector.png" alt="Injector schematic" />
+        </div>
+        <div class="beam-img-ph">beam image (OTRS:IN20:711)</div>
+        <div class="scalar-row">
+          <div class="scalar"><span class="lab">Beam Size X</span><span class="v">142 µm</span></div>
+          <div class="scalar"><span class="lab">Beam Size Y</span><span class="v">98 µm</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------- INJECTOR OPTION C ------------------- -->
+  <div class="option-label">
+    Option C · Collapsible accordion at the top
+    <span class="pros">Minimal space cost · open on first visit, closed for power-users · one click to recheck</span>
+  </div>
+  <div class="mock">
+    <div class="app-header">
+      <h3>LCLS Surrogate Lab — Injector</h3>
+      <span class="group-badge">Group 1</span>
+    </div>
+    <div class="tab-nav">
+      <button class="active">Injector</button>
+      <button>FEL</button>
+      <button>Combined</button>
+    </div>
+
+    <details class="diagram-accordion" open>
+      <summary>What does each slider do? (beamline schematic)</summary>
+      <div class="body">
+        <img src="../../talk-ai-at-slac/diagrams/16_injector.png" alt="Injector schematic" />
+      </div>
+    </details>
+
+    <div class="panel">
+      <div class="panel-controls">
+        <h4>Injector Controls</h4>
+        <div class="slider-mock"><div class="head"><span class="name">Solenoid Current</span><span class="val">0.478</span></div><div class="desc">Focuses the beam right after the gun.</div><div class="track t1"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Upstream Quad</span><span class="val">−2.10</span></div><div class="desc">Matching quadrupole.</div><div class="track t2"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Upstream Quad 2</span><span class="val">+1.85</span></div><div class="desc">Matching quadrupole.</div><div class="track t3"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Final Focus H</span><span class="val">−3.40</span></div><div class="desc">Squeezes horizontally.</div><div class="track t4"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Final Focus V</span><span class="val">+2.90</span></div><div class="desc">Squeezes vertically.</div><div class="track t5"></div></div>
+      </div>
+      <div class="panel-output">
+        <div class="beam-img-ph">beam image (OTRS:IN20:711)</div>
+        <div class="scalar-row">
+          <div class="scalar"><span class="lab">Beam Size X</span><span class="v">142 µm</span></div>
+          <div class="scalar"><span class="lab">Beam Size Y</span><span class="v">98 µm</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =============================================================== -->
+  <!-- FEL TAB — uses 17_beamline_endtoend.png                          -->
+  <!-- =============================================================== -->
+  <h2 class="section-title">FEL tab — end-to-end map above the gauge</h2>
+
+  <!-- ------------------- FEL OPTION A ------------------- -->
+  <div class="option-label">
+    Option A · Full-width banner above the panel grid
+    <span class="pros">Anchors the whole machine in one view · easy to find your sliders</span>
+  </div>
+  <div class="mock">
+    <div class="app-header">
+      <h3>LCLS Surrogate Lab — FEL</h3>
+      <span class="group-badge">Group 1</span>
+    </div>
+    <div class="tab-nav">
+      <button>Injector</button>
+      <button class="active">FEL</button>
+      <button>Combined</button>
+    </div>
+
+    <div class="diagram-banner">
+      <span class="cap">Where your sliders live · linac quads (cyan) and undulator gaps (green) shape the X-ray pulse measured at the gas detector</span>
+      <img src="../../talk-ai-at-slac/diagrams/17_beamline_endtoend.png" alt="End-to-end beamline" />
+    </div>
+
+    <div class="panel">
+      <div class="panel-controls">
+        <h4>FEL Controls</h4>
+        <div class="slider-mock"><div class="head"><span class="name">Mid-Linac Quad</span><span class="val">−12.4</span></div><div class="desc">QM in LI25.</div><div class="track t1"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Pre-Undulator Quad</span><span class="val">+8.7</span></div><div class="desc">QM in LI29.</div><div class="track t2"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 1</span><span class="val">7.21</span></div><div class="desc">UNDH:4150.</div><div class="track t3"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 2</span><span class="val">7.18</span></div><div class="desc">UNDH:4250.</div><div class="track t4"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 3</span><span class="val">7.24</span></div><div class="desc">UNDH:4650.</div><div class="track t5"></div></div>
+      </div>
+      <div class="panel-output">
+        <div class="gauge-ph">
+          <div class="lab">FEL pulse intensity (GDET:FEE1:241:ENRC)</div>
+          <div class="v">2.48 mJ</div>
+          <div class="bar"></div>
+          <div class="range"><span>0</span><span>4 mJ</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------- FEL OPTION B ------------------- -->
+  <div class="option-label">
+    Option B · Inline above the gauge (right column only)
+    <span class="pros">FEL gauge feels small alone · diagram fills the right column nicely · sliders untouched</span>
+  </div>
+  <div class="mock">
+    <div class="app-header">
+      <h3>LCLS Surrogate Lab — FEL</h3>
+      <span class="group-badge">Group 1</span>
+    </div>
+    <div class="tab-nav">
+      <button>Injector</button>
+      <button class="active">FEL</button>
+      <button>Combined</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-controls">
+        <h4>FEL Controls</h4>
+        <div class="slider-mock"><div class="head"><span class="name">Mid-Linac Quad</span><span class="val">−12.4</span></div><div class="desc">QM in LI25.</div><div class="track t1"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Pre-Undulator Quad</span><span class="val">+8.7</span></div><div class="desc">QM in LI29.</div><div class="track t2"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 1</span><span class="val">7.21</span></div><div class="desc">UNDH:4150.</div><div class="track t3"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 2</span><span class="val">7.18</span></div><div class="desc">UNDH:4250.</div><div class="track t4"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 3</span><span class="val">7.24</span></div><div class="desc">UNDH:4650.</div><div class="track t5"></div></div>
+      </div>
+      <div class="panel-output">
+        <div class="diagram-inline">
+          <span class="cap">Where your sliders live · gauge below shows the gas-detector reading</span>
+          <img src="../../talk-ai-at-slac/diagrams/17_beamline_endtoend.png" alt="End-to-end beamline" />
+        </div>
+        <div class="gauge-ph">
+          <div class="lab">FEL pulse intensity (GDET:FEE1:241:ENRC)</div>
+          <div class="v">2.48 mJ</div>
+          <div class="bar"></div>
+          <div class="range"><span>0</span><span>4 mJ</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------- FEL OPTION C ------------------- -->
+  <div class="option-label">
+    Option C · Compact strip above grid (always visible, half-height)
+    <span class="pros">Smaller footprint than A · still always in view · reads as a "you-are-here" map</span>
+  </div>
+  <div class="mock">
+    <div class="app-header">
+      <h3>LCLS Surrogate Lab — FEL</h3>
+      <span class="group-badge">Group 1</span>
+    </div>
+    <div class="tab-nav">
+      <button>Injector</button>
+      <button class="active">FEL</button>
+      <button>Combined</button>
+    </div>
+
+    <div class="diagram-banner compact tight">
+      <img src="../../talk-ai-at-slac/diagrams/17_beamline_endtoend.png" alt="End-to-end beamline" />
+    </div>
+
+    <div class="panel">
+      <div class="panel-controls">
+        <h4>FEL Controls</h4>
+        <div class="slider-mock"><div class="head"><span class="name">Mid-Linac Quad</span><span class="val">−12.4</span></div><div class="desc">QM in LI25.</div><div class="track t1"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Pre-Undulator Quad</span><span class="val">+8.7</span></div><div class="desc">QM in LI29.</div><div class="track t2"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 1</span><span class="val">7.21</span></div><div class="desc">UNDH:4150.</div><div class="track t3"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 2</span><span class="val">7.18</span></div><div class="desc">UNDH:4250.</div><div class="track t4"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 3</span><span class="val">7.24</span></div><div class="desc">UNDH:4650.</div><div class="track t5"></div></div>
+      </div>
+      <div class="panel-output">
+        <div class="gauge-ph">
+          <div class="lab">FEL pulse intensity (GDET:FEE1:241:ENRC)</div>
+          <div class="v">2.48 mJ</div>
+          <div class="bar"></div>
+          <div class="range"><span>0</span><span>4 mJ</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =============================================================== -->
+  <!-- COMBINED TAB — uses 17_beamline_endtoend.png                     -->
+  <!-- =============================================================== -->
+  <h2 class="section-title">Combined tab — end-to-end map above shared sliders</h2>
+
+  <!-- ------------------- COMBINED OPTION A ------------------- -->
+  <div class="option-label">
+    Option A · Full-width banner above the panel grid
+    <span class="pros">Most context-rich tab gets the most context · helps explain the "shared vs FEL-only" split</span>
+  </div>
+  <div class="mock">
+    <div class="app-header">
+      <h3>LCLS Surrogate Lab — Combined</h3>
+      <span class="group-badge">Group 1</span>
+    </div>
+    <div class="tab-nav">
+      <button>Injector</button>
+      <button>FEL</button>
+      <button class="active">Combined</button>
+    </div>
+
+    <div class="diagram-banner">
+      <span class="cap">All your knobs at a glance · injector magnets (purple) feed into linac quads (cyan) into undulator gaps (green) → gas detector</span>
+      <img src="../../talk-ai-at-slac/diagrams/17_beamline_endtoend.png" alt="End-to-end beamline" />
+    </div>
+
+    <div class="panel">
+      <div class="panel-controls">
+        <h4>Combined Controls</h4>
+        <h5>Shared (Injector + FEL)</h5>
+        <div class="slider-mock"><div class="head"><span class="name">Solenoid Current</span><span class="val">0.478</span></div><div class="desc">Injector focusing.</div><div class="track t1"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Final Focus H</span><span class="val">−3.40</span></div><div class="desc">Squeezes horizontally.</div><div class="track t4"></div></div>
+        <h5>FEL Only</h5>
+        <div class="slider-mock"><div class="head"><span class="name">Mid-Linac Quad</span><span class="val">−12.4</span></div><div class="desc">QM in LI25.</div><div class="track t2"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 1</span><span class="val">7.21</span></div><div class="desc">UNDH:4150.</div><div class="track t3"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 2</span><span class="val">7.18</span></div><div class="desc">UNDH:4250.</div><div class="track t5"></div></div>
+      </div>
+      <div class="panel-output">
+        <div class="beam-img-ph">beam image (OTRS:IN20:711)</div>
+        <div class="scalar-row">
+          <div class="scalar"><span class="lab">Beam Size X</span><span class="v">142 µm</span></div>
+          <div class="scalar"><span class="lab">Beam Size Y</span><span class="v">98 µm</span></div>
+        </div>
+        <div class="gauge-ph">
+          <div class="lab">FEL pulse intensity</div>
+          <div class="v">2.48 mJ</div>
+          <div class="bar"></div>
+          <div class="range"><span>0</span><span>4 mJ</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------- COMBINED OPTION B ------------------- -->
+  <div class="option-label">
+    Option B · Inline above the outputs (right column only)
+    <span class="pros">Diagram lives next to the visualizations · sliders column doesn't shift down</span>
+  </div>
+  <div class="mock">
+    <div class="app-header">
+      <h3>LCLS Surrogate Lab — Combined</h3>
+      <span class="group-badge">Group 1</span>
+    </div>
+    <div class="tab-nav">
+      <button>Injector</button>
+      <button>FEL</button>
+      <button class="active">Combined</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-controls">
+        <h4>Combined Controls</h4>
+        <h5>Shared (Injector + FEL)</h5>
+        <div class="slider-mock"><div class="head"><span class="name">Solenoid Current</span><span class="val">0.478</span></div><div class="desc">Injector focusing.</div><div class="track t1"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Final Focus H</span><span class="val">−3.40</span></div><div class="desc">Squeezes horizontally.</div><div class="track t4"></div></div>
+        <h5>FEL Only</h5>
+        <div class="slider-mock"><div class="head"><span class="name">Mid-Linac Quad</span><span class="val">−12.4</span></div><div class="desc">QM in LI25.</div><div class="track t2"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 1</span><span class="val">7.21</span></div><div class="desc">UNDH:4150.</div><div class="track t3"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 2</span><span class="val">7.18</span></div><div class="desc">UNDH:4250.</div><div class="track t5"></div></div>
+      </div>
+      <div class="panel-output">
+        <div class="diagram-inline">
+          <span class="cap">All your knobs at a glance</span>
+          <img src="../../talk-ai-at-slac/diagrams/17_beamline_endtoend.png" alt="End-to-end beamline" />
+        </div>
+        <div class="beam-img-ph">beam image (OTRS:IN20:711)</div>
+        <div class="scalar-row">
+          <div class="scalar"><span class="lab">Beam Size X</span><span class="v">142 µm</span></div>
+          <div class="scalar"><span class="lab">Beam Size Y</span><span class="v">98 µm</span></div>
+        </div>
+        <div class="gauge-ph">
+          <div class="lab">FEL pulse intensity</div>
+          <div class="v">2.48 mJ</div>
+          <div class="bar"></div>
+          <div class="range"><span>0</span><span>4 mJ</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------- COMBINED OPTION C ------------------- -->
+  <div class="option-label">
+    Option C · Collapsible accordion at the top
+    <span class="pros">Defaults open on first load · saves space when collapsed · same primitive on every tab</span>
+  </div>
+  <div class="mock">
+    <div class="app-header">
+      <h3>LCLS Surrogate Lab — Combined</h3>
+      <span class="group-badge">Group 1</span>
+    </div>
+    <div class="tab-nav">
+      <button>Injector</button>
+      <button>FEL</button>
+      <button class="active">Combined</button>
+    </div>
+
+    <details class="diagram-accordion" open>
+      <summary>Where your sliders sit on the beamline</summary>
+      <div class="body">
+        <img src="../../talk-ai-at-slac/diagrams/17_beamline_endtoend.png" alt="End-to-end beamline" />
+      </div>
+    </details>
+
+    <div class="panel">
+      <div class="panel-controls">
+        <h4>Combined Controls</h4>
+        <h5>Shared (Injector + FEL)</h5>
+        <div class="slider-mock"><div class="head"><span class="name">Solenoid Current</span><span class="val">0.478</span></div><div class="desc">Injector focusing.</div><div class="track t1"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Final Focus H</span><span class="val">−3.40</span></div><div class="desc">Squeezes horizontally.</div><div class="track t4"></div></div>
+        <h5>FEL Only</h5>
+        <div class="slider-mock"><div class="head"><span class="name">Mid-Linac Quad</span><span class="val">−12.4</span></div><div class="desc">QM in LI25.</div><div class="track t2"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 1</span><span class="val">7.21</span></div><div class="desc">UNDH:4150.</div><div class="track t3"></div></div>
+        <div class="slider-mock"><div class="head"><span class="name">Undulator Gap 2</span><span class="val">7.18</span></div><div class="desc">UNDH:4250.</div><div class="track t5"></div></div>
+      </div>
+      <div class="panel-output">
+        <div class="beam-img-ph">beam image (OTRS:IN20:711)</div>
+        <div class="scalar-row">
+          <div class="scalar"><span class="lab">Beam Size X</span><span class="v">142 µm</span></div>
+          <div class="scalar"><span class="lab">Beam Size Y</span><span class="v">98 µm</span></div>
+        </div>
+        <div class="gauge-ph">
+          <div class="lab">FEL pulse intensity</div>
+          <div class="v">2.48 mJ</div>
+          <div class="bar"></div>
+          <div class="range"><span>0</span><span>4 mJ</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <p style="max-width: 1400px; margin: 2rem auto 0; color: #475569; font-size: 0.85rem;">
+    <strong>Recommendation:</strong>
+    <span class="legend-bar">A on Injector</span>
+    <span class="legend-bar">A on FEL</span>
+    <span class="legend-bar amber">A on Combined</span>
+    — full-width banner is the most discoverable for a 30-min lab where students look at the page
+    once and dive in. C (accordion) is the safest bet if 13″-laptop vertical space is tight.
+  </p>
+
+</body>
+</html>

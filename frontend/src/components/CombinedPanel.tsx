@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import beamlineDiagram from "../assets/beamline_endtoend.png";
 import { evaluateCombined, evaluateFEL } from "../api/client";
 import type { CombinedResponse, SliderConfig } from "../types";
 import { BeamImage } from "./BeamImage";
+import { BeamlineDiagram } from "./BeamlineDiagram";
 import { IntensityGauge } from "./IntensityGauge";
 import { ScalarDisplay } from "./ScalarDisplay";
 import { SliderControl } from "./SliderControl";
@@ -122,6 +124,11 @@ export function CombinedPanel({ sharedSliders, felOnlySliders, group }: Props) {
       </div>
       <div className="panel-output">
         {error && <div className="error-message">{error}</div>}
+        <BeamlineDiagram
+          src={beamlineDiagram}
+          alt="End-to-end beamline"
+          caption="All your knobs at a glance"
+        />
         <BeamImage
           image={result?.image ?? []}
           beamX={result?.beam_x ?? []}
