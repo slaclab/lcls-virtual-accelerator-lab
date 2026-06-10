@@ -26,7 +26,7 @@ class InjectorSession:
     def __init__(self):
         from virtual_accelerator.models.staged_model import get_cu_hxr_staged_model
 
-        self.model = get_cu_hxr_staged_model(track_beam=True, end_element="OTR4")
+        self.model = get_cu_hxr_staged_model(track_beam=True, end_element="OTR4", n_particles=10000)
         self.lock = asyncio.Lock()
 
     def evaluate(self, inputs: dict[str, float]) -> dict:
